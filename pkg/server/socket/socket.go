@@ -1,59 +1,35 @@
 package socket
-
 import (
-	"fmt"
+	"flag"
 	"log"
 	"net/http"
-	socketio "github.com/googollee/go-socket.io"
 )
 
+var addr = flag.String("addr", ":8000", "http service address")
+
+func serveHome(w http.ResponseWriter, r *http.Request) {
+	log.Println(r.URL)
+	if r.URL.Path != "/" {
+		http.Error(w, "Not found", http.StatusNotFound)
+		return
+	}
+	if r.Method != "GET" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	http.ServeFile(w, r, "home.html")
+}
+
 func Example() {
-	messages := []string{}
-
-
-	server,_ := socketio.NewServer(nil)
-
-	server.OnConnect("/", func(s socketio.Conn) error {
-		s.SetContext("")
-		fmt.Println("connected:", s.ID())
-		return nil
+	flag.Parse()
+	hub := newHub()
+	go hub.run()
+	http.HandleFunc("/", serveHome)
+	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+		serveWs(hub, w, r)
 	})
-
-	server.OnEvent("/", "notice", func(s socketio.Conn, msg string) {
-		fmt.Println("notice:", msg)
-		for _,v := range messages {
-			s.Emit("reply", "...."+v)
-		}
-		s.Emit("reply", "have "+msg)
-		
-	})
-
-	server.OnEvent("/chat", "msg", func(s socketio.Conn, msg string) string {
-		s.SetContext(msg)
-		messages = append(messages, msg)
-		return "recv " + msg
-	})
-
-	server.OnEvent("/", "bye", func(s socketio.Conn) string {
-		last := s.Context().(string)
-		s.Emit("bye", last)
-		s.Close()
-		return last
-	})
-
-	server.OnError("/", func(s socketio.Conn, e error) {
-		fmt.Println("meet error:", e)
-	})
-
-	server.OnDisconnect("/", func(s socketio.Conn, reason string) {
-		fmt.Println("closed", reason)
-	})
-
-	go server.Serve()
-	defer server.Close()
-
-	http.Handle("/socket.io/", server)
-	http.Handle("/", http.FileServer(http.Dir("./asset")))
-	log.Println("Serving at localhost:8000...")
-	log.Fatal(http.ListenAndServe(":8000", nil))
+	err := http.ListenAndServe(*addr, nil)
+	if err != nil {
+		log.Fatal("ListenAndServe: ", err)
+	}
 }

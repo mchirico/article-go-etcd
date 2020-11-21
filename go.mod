@@ -8,6 +8,7 @@ require (
 	github.com/etcd-io/etcd v3.3.25+incompatible
 	github.com/google/uuid v1.1.2 // indirect
 	github.com/googollee/go-socket.io v1.4.4
+	github.com/gorilla/websocket v1.4.2
 	github.com/mchirico/zcovid v0.0.0-20201113153007-0561f03a907c
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/spf13/cobra v1.1.1
