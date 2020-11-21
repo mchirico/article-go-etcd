@@ -117,7 +117,6 @@ func (c *Client) writePump() {
 			w.Write([]byte("ping msg\n"))
 			// Chirico
 
-
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return

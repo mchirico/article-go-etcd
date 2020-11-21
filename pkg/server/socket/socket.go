@@ -1,4 +1,5 @@
 package socket
+
 import (
 	"flag"
 	"log"
@@ -24,6 +25,12 @@ func Example() {
 	flag.Parse()
 	hub := newHub()
 	go hub.run()
+
+	h := HANDLE{}
+	// Broadcast channel
+	h.broadcast = hub.broadcast
+
+	http.HandleFunc("/base", h.BaseRoot)
 	http.HandleFunc("/", serveHome)
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		serveWs(hub, w, r)
